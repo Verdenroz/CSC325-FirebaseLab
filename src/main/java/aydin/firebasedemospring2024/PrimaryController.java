@@ -29,6 +29,8 @@ public class PrimaryController {
     @FXML
     private TextField nameTextField;
 
+    @FXML TextField phoneField;
+
     @FXML
     private TextArea outputTextArea;
 
@@ -53,7 +55,6 @@ public class PrimaryController {
     }
 
     void initialize() {
-
         AccessDataView accessDataViewModel = new AccessDataView();
         nameTextField.textProperty().bindBidirectional(accessDataViewModel.personNameProperty());
         writeButton.disableProperty().bind(accessDataViewModel.isWritePossibleProperty().not());
@@ -66,19 +67,13 @@ public class PrimaryController {
     }
 
     @FXML
-    void registerButtonClicked(ActionEvent event) {
-        registerUser();
-    }
-
-
-    @FXML
     void writeButtonClicked(ActionEvent event) {
         addData();
     }
 
     @FXML
     private void switchToSecondary() throws IOException {
-        DemoApp.setRoot("secondary");
+        DemoApp.setRoot("welcome");
     }
     public boolean readFirebase()
     {
@@ -97,11 +92,17 @@ public class PrimaryController {
                 listOfUsers.clear();
                 for (QueryDocumentSnapshot document : documents)
                 {
-                    outputTextArea.setText(outputTextArea.getText()+ document.getData().get("Name")+ " , Age: "+
-                            document.getData().get("Age")+ " \n ");
+                    outputTextArea.setText(
+                            outputTextArea.getText() +
+                                    document.getData().get("Name")+ " , Age: "+
+                                    document.getData().get("Age")+ " , Phone: "+
+                                    document.getData().get("Phone")+ " \n ");
                     System.out.println(document.getId() + " => " + document.getData().get("Name"));
-                    person  = new Person(String.valueOf(document.getData().get("Name")),
-                            Integer.parseInt(document.getData().get("Age").toString()));
+                    person  = new Person(
+                            String.valueOf(document.getData().get("Name")),
+                            Integer.parseInt(document.getData().get("Age").toString()),
+                            String.valueOf(document.getData().get("Phone"))
+                    );
                     listOfUsers.add(person);
                 }
             }
@@ -119,30 +120,6 @@ public class PrimaryController {
         return key;
     }
 
-    public boolean registerUser() {
-        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                .setEmail("user222@example.com")
-                .setEmailVerified(false)
-                .setPassword("secretPassword")
-                .setPhoneNumber("+11234567890")
-                .setDisplayName("John Doe")
-                .setDisabled(false);
-
-        UserRecord userRecord;
-        try {
-            userRecord = DemoApp.fauth.createUser(request);
-            System.out.println("Successfully created new user with Firebase Uid: " + userRecord.getUid()
-            + " check Firebase > Authentication > Users tab");
-            return true;
-
-        } catch (FirebaseAuthException ex) {
-            // Logger.getLogger(FirestoreContext.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Error creating a new user in the firebase");
-            return false;
-        }
-
-    }
-
     public void addData() {
 
         DocumentReference docRef = DemoApp.fstore.collection("Persons").document(UUID.randomUUID().toString());
@@ -150,6 +127,7 @@ public class PrimaryController {
         Map<String, Object> data = new HashMap<>();
         data.put("Name", nameTextField.getText());
         data.put("Age", Integer.parseInt(ageTextField.getText()));
+        data.put("Phone", phoneField.getText());
 
         //asynchronously write data
         ApiFuture<WriteResult> result = docRef.set(data);
